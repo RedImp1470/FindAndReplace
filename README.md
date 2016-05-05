@@ -1,11 +1,11 @@
 ## Find and replace
 A small Unity3D editor extension to easily replace GameObjects.
-The tool finds all the objects with a certain name and replaces them with another prefab in our assets.
+The tool finds all the objects with a certain name and replaces them with another prefab in your assets.
 
 ####ATTENTION:
-> The tool will check for all objects whose name contains the name of the original object.<br>
+> The tool replaces all objects whose names contains the name of the original object.<br>
   For example: if you have three objects - car, car (1), car (2) - make sure to choose "car" as the original if you want to replace them all.<br>
-> It will only work for GameObjects and not for other components.<br>
+> It works only for GameObjects and not for other components.<br>
 > This is an extention for Unitys Editor and not thought for replacing GameObjects at runtime.
 
 
