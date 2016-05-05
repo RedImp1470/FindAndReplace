@@ -10,8 +10,7 @@ public class FindAndReplace : EditorWindow
     public Object Source;
     private Object _tempSource;
     public Object Outcome;
-    private List<GameObject> _objects;
-
+    private List<GameObject> _originalObjects;
     private bool _chosen;
 
     // Add menu named "My Window" to the Window menu
@@ -44,10 +43,10 @@ public class FindAndReplace : EditorWindow
             else
             {
                 var srcName = Source.name;
-                _objects = FindGameObjectsWithName(srcName);
+                _originalObjects = FindGameObjectsWithName(srcName);
                 _chosen = true;
 
-                if (_objects.Count < 1)
+                if (_originalObjects.Count < 1)
                 {
                     ShowNotification(new GUIContent("No object of this type in scene"));
                     _chosen = false;
@@ -60,13 +59,13 @@ public class FindAndReplace : EditorWindow
         Outcome = EditorGUILayout.ObjectField(Outcome, typeof(Object), false);
         if (GUILayout.Button("Replace!"))
         {
-            if (Outcome == null || _objects.Count < 1)
+            if (Outcome == null || _originalObjects.Count < 1)
             {
                 ShowNotification(new GUIContent("No object selected for replacing"));
             }
             else
             {
-                ReplaceObjects(_objects, Outcome);
+                ReplaceObjects(_originalObjects, Outcome);
                 Source = null;
                 Outcome = null;
                 _chosen = false;
@@ -91,8 +90,10 @@ public class FindAndReplace : EditorWindow
             try
             {
                 GameObject newObj = Instantiate(outcome, pos, rot) as GameObject;
+                Undo.RegisterCreatedObjectUndo(newObj, "Create object");
                 newObj.transform.parent = obj.transform.parent;
-                DestroyImmediate(obj);
+                Undo.DestroyObjectImmediate(obj);
+
             }
             catch (ArgumentException)
             {
@@ -107,8 +108,8 @@ public class FindAndReplace : EditorWindow
 
             }
         }
-
     }
+
 }
 
 
