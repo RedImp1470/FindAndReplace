@@ -11,6 +11,7 @@ public class FindAndReplace : EditorWindow
     public Object Source;
     private Object _tempSource;
     public Object Outcome;
+    private ThingToReplace _tempThingToReplace;
 
     public enum ThingToReplace
     {
@@ -32,6 +33,7 @@ public class FindAndReplace : EditorWindow
     void OnGUI()
     {
         _findAndReplaceHelper = CreateInstance<FindAndReplaceHelper>();
+        _tempThingToReplace = _thing;
         _thing = (ThingToReplace)EditorGUILayout.EnumPopup("Replace: ", _thing);
 
         WantToReplace(_thing);
@@ -95,6 +97,8 @@ public class FindAndReplace : EditorWindow
 
     private void SelectThingToReplace(ThingToReplace thing)
     {
+        if (_tempThingToReplace != thing)
+            Source = null;
         switch (thing)
         {
             case ThingToReplace.Object:
@@ -105,10 +109,13 @@ public class FindAndReplace : EditorWindow
                 Source = EditorGUILayout.ObjectField(Source, typeof(Material), true);
                 break;
         }
+        
     }
 
     private void SelectThingToReplaceWith(ThingToReplace thing)
     {
+        if (_tempThingToReplace != thing)
+            Outcome = null;
         switch (thing)
         {
             case ThingToReplace.Object:
