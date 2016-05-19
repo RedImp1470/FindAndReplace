@@ -1,33 +1,50 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
 public class FindAndReplace : EditorWindow
 {
+    private List<GameObject> _originalObjects;
+    private bool _chosen;
+    private FindAndReplaceHelper _findAndReplaceHelper;
     public Object Source;
     private Object _tempSource;
     public Object Outcome;
-    private List<GameObject> _originalObjects;
-    private bool _chosen;
+
+    public enum ThingToReplace
+    {
+        Object,
+        Material
+    }
+
+    private ThingToReplace _thing;
 
     // Add menu named "My Window" to the Window menu
-    [MenuItem("Window/Replace object")]
+    [MenuItem("Window/Find and Replace")]
     static void Init()
     {
         // Get existing open window or if none, make a new one:
-        FindAndReplace window = (FindAndReplace)EditorWindow.GetWindow(typeof(FindAndReplace));
+        FindAndReplace window = (FindAndReplace)GetWindow(typeof(FindAndReplace));
         window.Show();
     }
 
     void OnGUI()
     {
-        EditorGUILayout.LabelField("Select ONE of the objects you want to replace:");
+        _findAndReplaceHelper = CreateInstance<FindAndReplaceHelper>();
+        _thing = (ThingToReplace)EditorGUILayout.EnumPopup("Replace: ", _thing);
+
+        WantToReplace(_thing);
+    }
+
+
+    private void WantToReplace(ThingToReplace thing)
+    {
+        EditorGUILayout.LabelField("Select what you want to replace:");
 
         _tempSource = Source;
-        Source = EditorGUILayout.ObjectField(Source, typeof(Object), true);
+        
+        SelectThingToReplace(thing);
 
         if (_tempSource != Source)
         {
@@ -38,25 +55,27 @@ public class FindAndReplace : EditorWindow
         {
             if (Source == null)
             {
-                ShowNotification(new GUIContent("No object selected for searching"));
+                ShowNotification(new GUIContent("Nothing selected for searching"));
             }
             else
             {
-                var srcName = Source.name;
-                _originalObjects = FindGameObjectsWithName(srcName);
+                Search(thing);
+
                 _chosen = true;
 
                 if (_originalObjects.Count < 1)
                 {
-                    ShowNotification(new GUIContent("No object of this type in scene"));
+                    ShowNotification(new GUIContent("Nothing of this type in scene"));
                     _chosen = false;
                 }
             }
         }
 
         EditorGUILayout.BeginToggleGroup(" ", _chosen);
-        EditorGUILayout.LabelField("Select the prefab you want to replace with:");
-        Outcome = EditorGUILayout.ObjectField(Outcome, typeof(Object), false);
+        EditorGUILayout.LabelField("Select what you want to replace with:");
+
+        SelectThingToReplaceWith(thing);
+
         if (GUILayout.Button("Replace!"))
         {
             if (Outcome == null || _originalObjects.Count < 1)
@@ -65,7 +84,7 @@ public class FindAndReplace : EditorWindow
             }
             else
             {
-                ReplaceObjects(_originalObjects, Outcome);
+                Replace(thing);
                 Source = null;
                 Outcome = null;
                 _chosen = false;
@@ -74,42 +93,59 @@ public class FindAndReplace : EditorWindow
         EditorGUILayout.EndToggleGroup();
     }
 
-    private static List<GameObject> FindGameObjectsWithName(string name)
+    private void SelectThingToReplace(ThingToReplace thing)
     {
-        var allGameObjects = FindObjectsOfType<GameObject>();
-        var objects = allGameObjects.Where(obj => obj.name.Contains(name)).ToList();
-        return objects;
-    }
-
-    private void ReplaceObjects(IEnumerable<GameObject> objects, Object outcome)
-    {
-        foreach (var obj in objects)
+        switch (thing)
         {
-            var rot = obj.transform.rotation;
-            var pos = obj.transform.position;
-            try
-            {
-                GameObject newObj = Instantiate(outcome, pos, rot) as GameObject;
-                Undo.RegisterCreatedObjectUndo(newObj, "Create object");
-                newObj.transform.parent = obj.transform.parent;
-                Undo.DestroyObjectImmediate(obj);
+            case ThingToReplace.Object:
+                Source = EditorGUILayout.ObjectField(Source, typeof(GameObject), true);
+                break;
 
-            }
-            catch (ArgumentException)
-            {
-
-                ShowNotification(new GUIContent("Chosen object is not a prefab!"));
-
-            }
-            catch (NullReferenceException)
-            {
-
-                ShowNotification(new GUIContent("Chosen object is not a prefab!"));
-
-            }
+            case ThingToReplace.Material:
+                Source = EditorGUILayout.ObjectField(Source, typeof(Material), true);
+                break;
         }
     }
 
+    private void SelectThingToReplaceWith(ThingToReplace thing)
+    {
+        switch (thing)
+        {
+            case ThingToReplace.Object:
+                Outcome = EditorGUILayout.ObjectField(Outcome, typeof(GameObject), false);
+                break;
+            case ThingToReplace.Material:
+                Outcome = EditorGUILayout.ObjectField(Outcome, typeof(Material), false);
+                break;
+        }
+    }
+
+    private void Search(ThingToReplace thing)
+    {
+        switch (thing)
+        {
+            case ThingToReplace.Object:
+                var srcName = Source.name;
+                _originalObjects = _findAndReplaceHelper.FindGameObjectsWith(srcName);
+                break;
+            case ThingToReplace.Material:
+                _originalObjects = _findAndReplaceHelper.FindGameObjectsWith(Source as Material);
+                break;
+        }
+    }
+
+    private void Replace(ThingToReplace thing)
+    {
+        switch (thing)
+        {
+            case ThingToReplace.Object:
+                _findAndReplaceHelper.ReplaceAThing(_originalObjects, Outcome);
+                break;
+            case ThingToReplace.Material:
+                _findAndReplaceHelper.ReplaceAThing(_originalObjects, Outcome as Material);
+                break;
+        }
+    }
 }
 
 
