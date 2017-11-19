@@ -1,7 +1,7 @@
 ## Find and replace
 A small Unity3D editor extension to easily replace GameObjects and Materials.
 
-####Take note:
+#### Take note:
 > The tool replaces all GameObjectsObjects whose names contains the name of the original object.<br>
   For example: if you have three objects - car, car (1), car (2) - make sure to choose "car" as the original if you want to replace them all.<br>
 > Materials: The material is replaced on ALL objects whose material equals the one you chose in the first object field.<br>
